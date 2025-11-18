@@ -1,10 +1,20 @@
 extends Window
 
-@onready var tree: Tree = $VBoxContainer/HBoxContainer/VBoxContainer2/Tree
-@onready var search_bar: LineEdit = $VBoxContainer/HBoxContainer/VBoxContainer2/SearchBar
-@onready var start_button: Button = $VBoxContainer/HBoxContainer2/StartButton
-@onready var props_label: Label = $VBoxContainer/HBoxContainer/VBoxContainer/ScrollContainer/PropsLabel
+@onready var tree: Tree = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer2/Tree
+@onready var search_bar: LineEdit = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer2/HBoxContainer/SearchBar
+@onready var start_button: Button = $MarginContainer/VBoxContainer/HBoxContainer2/StartButton
+@onready var select_all_button: Button = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer2/HBoxContainer/SelectAll
+@onready var select_none_button: Button = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer2/HBoxContainer/SelectNone
 
+@onready var titel_prop_label: Label = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/TitelPropLabel
+@onready var search_bar_prop: LineEdit = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/SearchBarProp
+@onready var props_label: Label = $MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ScrollContainer/PropsLabel
+
+
+signal start_recording_with_nodes(nodes: Array)
+
+var current_selected_node: Node = null
+var current_prop_search_term: String = ""
 
 func _ready() -> void:
 	var root_node = get_tree().get_root()
@@ -12,6 +22,10 @@ func _ready() -> void:
 		_populate_node_tree(root_node, tree)
 		
 	search_bar.text_changed.connect(_on_search_changed)
+	select_all_button.pressed.connect(_on_select_all)
+	select_none_button.pressed.connect(_on_unselect_all)
+	
+	search_bar_prop.text_changed.connect(_on_prop_search_changed)
 	start_button.pressed.connect(_on_start_button_pressed)
 
 func _populate_node_tree(current_node: Node, tree_control: Tree, parent_item: TreeItem = null) -> void:
@@ -71,11 +85,35 @@ func _filter_tree(item: TreeItem, search_term: String) -> bool:
 	
 	return visible
 	
+func _on_select_all() -> void:
+	var root_item = tree.get_root()
+	if root_item:
+		_set_all_checked(root_item, true)
+
+func _on_unselect_all() -> void:
+	var root_item = tree.get_root()
+	if root_item:
+		_set_all_checked(root_item, false)
+		
+func _set_all_checked(item: TreeItem, checked: bool) -> void:
+	item.set_checked(1, checked)
+	
+	var child = item.get_first_child()
+	while child:
+		_set_all_checked(child, checked)
+		child = child.get_next()
+	
 func _on_start_button_pressed() -> void:
 	var checked_nodes = get_checked_nodes()
+	
+	start_recording_with_nodes.emit(checked_nodes)
+	
 	print("Values are stored for")
 	for node in checked_nodes:
 		print("[%s] %s" % [node.get_class(), node.name])
+		
+	self.hide()
+	queue_free()
 	
 func get_checked_nodes() -> Array:
 	var checked_nodes = []
@@ -98,15 +136,28 @@ func get_checked_items(item: TreeItem, results:Array = []) -> Array:
 func _on_tree_item_selected() -> void:
 	var item = tree.get_selected()
 	if item:
-		var node = item.get_meta("node")
-		if node:
-			_show_props(node)
+		current_selected_node = item.get_meta("node")
+		if current_selected_node:
+			titel_prop_label.text = "Properties of " + current_selected_node.name
+			_show_props(current_selected_node, current_prop_search_term)
 			
-func _show_props(node: Node) -> void:
+func _show_props(node: Node, filter: String = "") -> void:
 	var props := []
+	filter = filter.to_lower()
+	
 	for p in node.get_property_list():
+		var name = p.name.to_lower()
+		
+		if filter != "" and name.find(filter) == -1:
+			continue
+		
 		var value = str(node.get(p.name))
 		if value.length() > 50:
 			value = value.substr(0, 50) + "..."
 		props.append("%s: %s" % [p.name, value])
 	props_label.text = "\n".join(props)
+	
+func _on_prop_search_changed(text: String) -> void:
+	current_prop_search_term = text
+	if current_selected_node:
+		_show_props(current_selected_node, text)
