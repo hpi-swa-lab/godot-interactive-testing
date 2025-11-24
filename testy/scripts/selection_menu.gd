@@ -108,9 +108,9 @@ func _on_start_button_pressed() -> void:
 	
 	start_recording_with_nodes.emit(checked_nodes)
 	
-	print("Values are stored for")
-	for node in checked_nodes:
-		print("[%s] %s" % [node.get_class(), node.name])
+	# print("Values are stored for")
+	# for node in checked_nodes:
+	#	print("[%s] %s" % [node.get_class(), node.name])
 		
 	self.hide()
 	queue_free()
@@ -121,7 +121,7 @@ func get_checked_nodes() -> Array:
 	for item in checked_items:
 		checked_nodes.append(item.get_meta("node"))
 		
-	print(checked_nodes)
+	# print(checked_nodes)
 	return checked_nodes
 	
 func get_checked_items(item: TreeItem, results:Array = []) -> Array:
