@@ -4,6 +4,8 @@
 @tool
 extends Node
 
+var is_restoring = false
+
 # Signal for runtime persistence completion
 signal recording_finished()
 # Signal for real-time UI state updates
@@ -15,13 +17,24 @@ var state_inspector_window: Window = null
 var stop_recording_window: Window = null
 const TEST_DIR = "res://tests/" 
 
+# --- NEW: Save Game Constants ---
+const SAVE_DIR = "user://saves/"
+const SAVE_FILE_NAME = "savegame.bin"
+# ------------------------------
+
+var serializer = Serializier.new()
+var deserializer = Deserializer.new()
+
 # --- Core Game Loop Input Capture / Recording Logic (Unchanged) ---
 
 func _ready():
 	add_to_group("state_inspector")
 	if not Engine.is_editor_hint():
 		set_process_input(true)
-		print("Input Recorder initialized in Game Runtime. Ctrl+R toggles recording.")
+		print("Input Recorder initialized. Ctrl+R toggles recording. Ctrl+S to save. Ctrl+O to load.")
+		
+		# Ensure the save directory exists
+		DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 
 func _input(event: InputEvent):
 	if not Engine.is_editor_hint():
@@ -34,6 +47,18 @@ func _input(event: InputEvent):
 					# start_recording()
 					_create_state_inspector()
 				return
+				
+			# --- UPDATED: CTRL+S ---
+			if event.ctrl_pressed and event.keycode == KEY_S:
+				get_viewport().set_input_as_handled()
+				save_game_state()
+				return
+
+			# --- NEW: CTRL+O ---
+			if event.ctrl_pressed and event.keycode == KEY_O:
+				get_viewport().set_input_as_handled()
+				load_game_state()
+				return
 
 	if is_recording:
 		var event_data = {
@@ -41,6 +66,86 @@ func _input(event: InputEvent):
 			"data": event.to_string()
 		}
 		recorded_events.append(event_data)
+		
+# --- NEW: Save/Load Functions ---
+
+func save_game_state():
+	if is_restoring:
+		print("Cannot save while restoring.")
+		return
+
+	print("Saving game state...")
+	var current_scene = get_tree().get_current_scene()
+	if not current_scene:
+		push_error("Cannot save: No current scene.")
+		return
+		
+	var serialized: PackedByteArray = serializer.serialize(current_scene)
+	
+	var save_path = SAVE_DIR.path_join(SAVE_FILE_NAME)
+	var file = FileAccess.open(save_path, FileAccess.WRITE)
+	if file:
+		file.store_buffer(serialized)
+		file.close()
+		print("Game state saved successfully to: %s" % save_path)
+	else:
+		push_error("Failed to open save file for writing at: %s" % save_path)
+
+func load_game_state():
+	if is_recording:
+		print("Cannot load while recording.")
+		return
+		
+	var save_path = SAVE_DIR.path_join(SAVE_FILE_NAME)
+	
+	if not FileAccess.file_exists(save_path):
+		push_error("Cannot load: Save file not found at: %s" % save_path)
+		return
+		
+	print("Loading game state from: %s" % save_path)
+	var file = FileAccess.open(save_path, FileAccess.READ)
+	if not file:
+		push_error("Failed to open save file for reading.")
+		return
+		
+	var serialized: PackedByteArray = file.get_buffer(file.get_length())
+	file.close()
+	
+	if serialized.is_empty():
+		push_error("Cannot load: Save file is empty.")
+		return
+
+	# --- This is your restore logic from before ---
+	var current_scene = get_tree().get_current_scene()
+	var index = current_scene.get_index()
+	var parent = current_scene.get_parent()
+	parent.remove_child(current_scene)
+
+	# --- HERE IS THE PAUSE ---
+	get_tree().set_pause(true)
+	self.is_restoring = true
+
+	var restored_scene: Node = deserializer.restore(serialized)
+	
+	if not restored_scene:
+		push_error("CRITICAL: Deserialization failed. Restoring original scene.")
+		parent.add_child(current_scene)
+		parent.move_child(current_scene, index)
+		self.is_restoring = false
+		get_tree().set_pause(false)
+		return
+
+	parent.add_child(restored_scene)
+	parent.move_child(restored_scene, index)
+
+	current_scene.queue_free()
+	get_tree().current_scene = restored_scene
+
+	# --- AND UNPAUSE ---
+	self.is_restoring = false
+	get_tree().set_pause(false) # Re-enable processing for the now-restored tree
+	print("Game state loaded successfully.")
+
 		
 # --- Persistence Method (Unchanged) ---
 

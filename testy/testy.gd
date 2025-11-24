@@ -14,12 +14,14 @@ func _add_input_recorder():
 
 func _remove_input_recorder():
 	remove_autoload_singleton(INPUT_RECORDER_NODE_NAME)
-
+	
 func _enable_plugin() -> void:
+	_add_input_recorder()
 	pass
 
 
 func _disable_plugin() -> void:
+	_remove_input_recorder()
 	pass
 	
 func _process(delta: float) -> void:
@@ -56,12 +58,9 @@ func _enter_tree() -> void:
 	
 	add_control_to_bottom_panel(panel, "Testy Panel")
 	
-	_add_input_recorder()
-
 
 func _exit_tree() -> void:
 	if panel:
 		remove_control_from_bottom_panel(panel)
 		panel.queue_free()
 	
-	_remove_input_recorder()	
