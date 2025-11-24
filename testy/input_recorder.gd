@@ -14,6 +14,7 @@ signal state_changed(is_recording: bool)
 var is_recording: bool = false
 var recorded_events: Array = []
 var state_inspector_window: Window = null 
+var stop_recording_window: Window = null
 const TEST_DIR = "res://tests/" 
 
 # --- NEW: Save Game Constants ---
@@ -27,6 +28,7 @@ var deserializer = Deserializer.new()
 # --- Core Game Loop Input Capture / Recording Logic (Unchanged) ---
 
 func _ready():
+	add_to_group("state_inspector")
 	if not Engine.is_editor_hint():
 		set_process_input(true)
 		print("Input Recorder initialized. Ctrl+R toggles recording. Ctrl+S to save. Ctrl+O to load.")
@@ -42,7 +44,8 @@ func _input(event: InputEvent):
 				if is_recording:
 					stop_recording()
 				else:
-					start_recording()
+					# start_recording()
+					_create_state_inspector()
 				return
 				
 			# --- UPDATED: CTRL+S ---
@@ -172,68 +175,51 @@ func _save_event_recording(events: Array):
 func _create_state_inspector():
 	if state_inspector_window:
 		return
-
-	state_inspector_window = Window.new()
+		
+	get_tree().set_pause(true)
+		
+	var scene := load("res://addons/testy/scenes/selection_menu.tscn")
 	
-	# FIX IS HERE: Force this control to process input/updates even when paused.
+	state_inspector_window = scene.instantiate()
+	state_inspector_window.add_to_group("state_inspector")
 	state_inspector_window.process_mode = Node.PROCESS_MODE_ALWAYS
-	
-	state_inspector_window.title = "Runtime State Inspector (Paused)"
-	state_inspector_window.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_MAIN_WINDOW_SCREEN
-	state_inspector_window.size = Vector2(800, 600)
-	state_inspector_window.min_size = Vector2(400, 300)
-	
 	state_inspector_window.close_requested.connect(_on_state_inspector_closed)
 	
-	var v_box = VBoxContainer.new()
-	v_box.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v_box.add_theme_constant_override("separation", 10) 
-	state_inspector_window.add_child(v_box)
-	
-	var info_label = Label.new()
-	info_label.text = "Select nodes to decide which properties to save at the start state."
-	v_box.add_child(info_label)
-	
-	var tree = Tree.new()
-	# Ensure Tree fills the space and has scrollbars if content overflows
-	tree.size_flags_vertical = Control.SIZE_EXPAND_FILL 
-	tree.allow_reselect = true
-	v_box.add_child(tree)
-	
-	var root_node = get_tree().get_root()
-	if root_node:
-		_populate_node_tree(root_node, tree)
-	
-	get_tree().get_root().add_child(state_inspector_window)
+	state_inspector_window.start_recording_with_nodes.connect(_on_start_recording_from_window)
+
+	get_tree().root.add_child(state_inspector_window)
 	state_inspector_window.popup_centered()
-
-func _populate_node_tree(current_node: Node, tree_control: Tree, parent_item: TreeItem = null):
-	var item: TreeItem
-	if parent_item == null:
-		item = tree_control.create_item()
-		tree_control.set_hide_root(true)
-	else:
-		item = tree_control.create_item(parent_item)
-	
-	tree_control.set_columns(1)
-	item.set_text(0, "[%s] %s" % [current_node.get_class(), current_node.name])
-	item.set_meta("node_path", current_node.get_path())
-
-	for child in current_node.get_children():
-		# Skip the state inspector window and the Autoload itself
-		if child == state_inspector_window or child.name == name:
-			continue
-			
-		# This print(prop) is very spammy, you may want to remove it
-		# for prop in child.get_property_list():
-		# 	print(prop)
-		_populate_node_tree(child, tree_control, item)
+	return
 
 func _on_state_inspector_closed():
 	if state_inspector_window:
 		state_inspector_window.queue_free()
 		state_inspector_window = null
 	unpause_game()
+	
+func _show_stop_recording_menu():
+	var scene := load("res://addons/testy/scenes/stop_recording_menu.tscn")
+	stop_recording_window = scene.instantiate()
+	stop_recording_window.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().root.add_child(stop_recording_window)
+	stop_recording_window.popup_centered()
+	
+func _close_stop_recording_menu():
+	if stop_recording_window:
+		stop_recording_window.queue_free()
+		stop_recording_window = null
+		
+func _save_recording_async():
+	await get_tree().create_timer(0.1).timeout
+	_save_event_recording(recorded_events)
+	
+	
+func _on_start_recording_from_window(nodes: Array):
+	print("Start recording with nodes ", nodes)
+	
+	# TODO
+	
+	start_recording()
 
 # --- Public API for Recording and Persistence ---
 
@@ -242,8 +228,7 @@ func start_recording():
 	recorded_events.clear()
 	print("Recording started.")
 	
-	get_tree().set_pause(true)
-	_create_state_inspector()
+	unpause_game()
 	
 	state_changed.emit(is_recording)
 
@@ -251,7 +236,14 @@ func stop_recording():
 	is_recording = false
 	print("Recording stopped. Events recorded: %d" % recorded_events.size())
 	
-	_save_event_recording(recorded_events)
+	_show_stop_recording_menu()
+	
+	await get_tree().process_frame
+	await _save_recording_async()
+	
+	_close_stop_recording_menu()
+	
+	# _save_event_recording(recorded_events)
 	
 	recording_finished.emit()
 	state_changed.emit(is_recording)

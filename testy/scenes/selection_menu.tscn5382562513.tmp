@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3 uid="uid://bkrtaai15yip1"]
+
+[ext_resource type="Script" uid="uid://wcoi50msbr58" path="res://addons/testy/scripts/selection_menu.gd" id="1_8gduo"]
+
+[node name="Selection Menu" type="Window"]
+oversampling_override = 1.0
+title = "State Inspector"
+position = Vector2i(0, 36)
+size = Vector2i(800, 600)
+min_size = Vector2i(400, 300)
+script = ExtResource("1_8gduo")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Titel" type="Label" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Start Recording"
+
+[node name="Subtitel" type="Label" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Select values and objects to be recorded"
+
+[node name="StartButton" type="Button" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Start Recording"
+
+[node name="SearchBar" type="LineEdit" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Search ..."
+keep_editing_on_text_submit = true
+
+[node name="Tree" type="Tree" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
