@@ -1,9 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://bkrtaai15yip1"]
+[gd_scene load_steps=2 format=3 uid="uid://bkrtaai15yip1"]
 
 [ext_resource type="Script" uid="uid://wcoi50msbr58" path="res://addons/testy/scripts/selection_menu.gd" id="1_8gduo"]
-
-[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_8gduo"]
-size = Vector2(20, 20)
 
 [node name="Selection Menu" type="Window"]
 oversampling_override = 1.0
@@ -36,7 +33,6 @@ layout_mode = 2
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Start Recording"
-icon = SubResource("PlaceholderTexture2D_8gduo")
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
 layout_mode = 2

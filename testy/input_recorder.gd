@@ -217,7 +217,7 @@ func _play_recording(dir_name: String):
 		var start_path = current_test_dir.path_join("stop_savegame.bin")
 		var end_path = current_test_dir.path_join("test_savegame.bin")
 		var result = compare_snapshots.show_diff(start_path, end_path)
-		# _show_stop_recording_menu(result)
+		_show_stop_recording_menu(result)
 	
 func _replay_events(events: Array) -> void:
 	for e in events:
@@ -310,7 +310,7 @@ func _save_recording_async():
 	
 	
 func _on_start_recording_from_window(nodes: Array):
-	current_timestamp = str(Time.get_unix_time_from_system()).split(".")[0]
+	current_timestamp = str(Time.get_datetime_string_from_system().replace(":", "").replace("T", "_"))
 	current_test_dir = TEST_DIR + "test_" + current_timestamp + "/"
 	DirAccess.make_dir_recursive_absolute(current_test_dir)
 	

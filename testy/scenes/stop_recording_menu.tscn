@@ -5,8 +5,8 @@
 [node name="StopRecordingWindow" type="Window"]
 oversampling_override = 1.0
 position = Vector2i(0, 36)
-size = Vector2i(500, 500)
-min_size = Vector2i(500, 500)
+size = Vector2i(800, 800)
+min_size = Vector2i(800, 800)
 script = ExtResource("1_oxj5x")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -19,13 +19,72 @@ grow_vertical = 2
 [node name="Label" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Recording stopped"
+text = "Changes between states"
 
-[node name="Label_Added" type="Label" parent="VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="Label_Removed" type="Label" parent="VBoxContainer"]
+[node name="Label2" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Added Nodes"
+
+[node name="AddedNodes" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemListAdded" type="ItemList" parent="VBoxContainer/AddedNodes"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/AddedNodes"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PropsAdded" type="Label" parent="VBoxContainer/AddedNodes/ScrollContainer"]
 layout_mode = 2
 
-[node name="Label_Changed" type="Label" parent="VBoxContainer"]
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
+
+[node name="Label3" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Removed Nodes"
+
+[node name="RemovedNodes" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemListRemoved" type="ItemList" parent="VBoxContainer/RemovedNodes"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/RemovedNodes"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PropsRemoved" type="Label" parent="VBoxContainer/RemovedNodes/ScrollContainer"]
+layout_mode = 2
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label4" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Changed Nodes"
+
+[node name="ChangedNodes" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemListChanged" type="ItemList" parent="VBoxContainer/ChangedNodes"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ChangedNodes"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PropsChanges" type="Label" parent="VBoxContainer/ChangedNodes/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
