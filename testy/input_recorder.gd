@@ -80,7 +80,7 @@ func _input(event: InputEvent):
 		
 # --- Save/Load Functions ---
 
-func save_game_state(prefix = ""):
+func save_game_state(name = "tmp"):
 	if is_restoring:
 		print("Cannot save while restoring.")
 		return
@@ -95,7 +95,7 @@ func save_game_state(prefix = ""):
 	
 	var save_path: String
 	if current_test_dir != "":
-		save_path = current_test_dir.path_join(prefix + "_savegame.bin")
+		save_path = current_test_dir.path_join(name + ".bin")
 	else:
 		save_path = SAVE_DIR.path_join(SAVE_FILE_NAME)
 	var file = FileAccess.open(save_path, FileAccess.WRITE)
@@ -186,13 +186,14 @@ func _play_recording(dir_name: String):
 	print("Playing test recording from: %s" % test_path)
 	current_test_dir = test_path
 
-	var save_file_path = current_test_dir.path_join("start_savegame.bin")
+	var save_file_path = current_test_dir.path_join("savegame-A.bin")
 	if not FileAccess.file_exists(save_file_path):
 		push_error("Start save not found: %s" % save_file_path)
 		return
 
 	print("Loading start savegame...")
-	load_game_state(save_file_path)
+	await load_game_state(save_file_path)
+	await save_game_state("test-A")
 
 	var rec_path = current_test_dir.path_join("recording.json")
 	if not FileAccess.file_exists(rec_path):
@@ -212,11 +213,20 @@ func _play_recording(dir_name: String):
 
 	await _replay_events(events)
 	
-	await save_game_state("test")
+	await save_game_state("test-B")
+	
 	if current_test_dir != "":
-		var start_path = current_test_dir.path_join("stop_savegame.bin")
-		var end_path = current_test_dir.path_join("test_savegame.bin")
-		var result = compare_snapshots.show_diff(start_path, end_path)
+		var start_path = current_test_dir.path_join("savegame-A.bin")
+		var end_path = current_test_dir.path_join("savegame-B.bin")
+		var savegame_result = compare_snapshots.show_diff(start_path, end_path)
+		
+		var test_A_path = current_test_dir.path_join("test-A.bin")
+		var test_B_path = current_test_dir.path_join("test-B.bin")
+		var test_result = compare_snapshots.show_diff(test_A_path, test_B_path)
+		save_diff(test_result, "test")
+		
+		var result = compare_snapshots.diff_diff(savegame_result, test_result)
+		
 		_show_stop_recording_menu(result)
 	
 func _replay_events(events: Array) -> void:
@@ -314,7 +324,7 @@ func _on_start_recording_from_window(nodes: Array):
 	current_test_dir = TEST_DIR + "test_" + current_timestamp + "/"
 	DirAccess.make_dir_recursive_absolute(current_test_dir)
 	
-	save_game_state("start")
+	save_game_state("savegame-A")
 	start_recording()
 
 # --- Public API for Recording and Persistence ---
@@ -332,12 +342,13 @@ func stop_recording():
 	is_recording = false
 	print("Recording stopped. Events recorded: %d" % recorded_events.size())
 	
-	save_game_state("stop")
+	save_game_state("savegame-B")
 	
 	if current_test_dir != "":
-		var start_path = current_test_dir.path_join("start_savegame.bin")
-		var end_path = current_test_dir.path_join("stop_savegame.bin")
+		var start_path = current_test_dir.path_join("savegame-A.bin")
+		var end_path = current_test_dir.path_join("savegame-B.bin")
 		var result = compare_snapshots.show_diff(start_path, end_path)
+		save_diff(result)
 		_show_stop_recording_menu(result)
 	else:
 		_show_stop_recording_menu({})
@@ -351,6 +362,21 @@ func stop_recording():
 	
 	recording_finished.emit()
 	state_changed.emit(is_recording)
+	
+func save_diff(diff: Dictionary, suffix = ""):
+	var save_path: String
+	if current_test_dir != "":
+		save_path = current_test_dir.path_join("diff" + suffix + ".json")
+	else:
+		save_path = SAVE_DIR.path_join(SAVE_FILE_NAME)
+	var file = FileAccess.open(save_path, FileAccess.WRITE)
+	if file:
+		var json_string = JSON.stringify(diff, "\t")
+		file.store_string(json_string)
+		file.close()
+	else:
+		push_error("Failed to open save file for writing at: %s" % save_path)
+	
 
 func unpause_game():
 	get_tree().set_pause(false)

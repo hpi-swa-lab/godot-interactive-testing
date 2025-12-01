@@ -5,8 +5,8 @@ extends Window
 @onready var label_removed: Label = $VBoxContainer/Label_Removed
 @onready var label_changed: Label = $VBoxContainer/Label_Changed
 
-@onready var item_list_added: ItemList = $VBoxContainer/AddedNodes/ItemListAdded
-@onready var item_list_removed: ItemList = $VBoxContainer/RemovedNodes/ItemListRemoved
+@onready var item_list_added: ItemList = $VBoxContainer/HBoxContainer/VBoxContainer/AddedNodes/ItemListAdded
+@onready var item_list_removed: ItemList = $VBoxContainer/HBoxContainer/VBoxContainer2/RemovedNodes/ItemListRemoved
 @onready var item_list_changed: ItemList = $VBoxContainer/ChangedNodes/ItemListChanged
 @onready var props_changes: Label = $VBoxContainer/ChangedNodes/ScrollContainer/PropsChanges
 
