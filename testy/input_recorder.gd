@@ -114,36 +114,9 @@ func load_game_state():
 	if serialized.is_empty():
 		push_error("Cannot load: Save file is empty.")
 		return
-
-	# --- This is your restore logic from before ---
-	var current_scene = get_tree().get_current_scene()
-	var index = current_scene.get_index()
-	var parent = current_scene.get_parent()
-	parent.remove_child(current_scene)
-
-	# --- HERE IS THE PAUSE ---
-	get_tree().set_pause(true)
-	self.is_restoring = true
-
-	var restored_scene: Node = deserializer.restore(serialized)
 	
-	if not restored_scene:
-		push_error("CRITICAL: Deserialization failed. Restoring original scene.")
-		parent.add_child(current_scene)
-		parent.move_child(current_scene, index)
-		self.is_restoring = false
-		get_tree().set_pause(false)
-		return
+	deserializer.restore(serialized, get_tree())	
 
-	parent.add_child(restored_scene)
-	parent.move_child(restored_scene, index)
-
-	current_scene.queue_free()
-	get_tree().current_scene = restored_scene
-
-	# --- AND UNPAUSE ---
-	self.is_restoring = false
-	get_tree().set_pause(false) # Re-enable processing for the now-restored tree
 	print("Game state loaded successfully.")
 
 		
