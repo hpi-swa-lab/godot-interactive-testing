@@ -48,15 +48,6 @@ func _populate_node_tree(current_node: Node, tree_control: Tree, parent_item: Tr
 	
 	item.set_meta("node", current_node)
 	item.set_meta("node_path", current_node.get_path())
-	# item.set_tooltip_text(0, "%s" % [current_node.get_property_list()])
-	# print(current_node.get_property_list())
-	# var props := []
-	# for p in current_node.get_property_list():
-	#	var value = str(current_node.get(p.name))
-	#	if value.length() > 50:
-	#		value = value.substr(0, 50) + "..."
-	#	props.append("%s: %s" % [p.name, value])
-	#item.set_tooltip_text(0, "\n".join(props))
 
 	for child in current_node.get_children():
 		# Skip the state inspector window and the Autoload itself
@@ -105,13 +96,7 @@ func _set_all_checked(item: TreeItem, checked: bool) -> void:
 	
 func _on_start_button_pressed() -> void:
 	var checked_nodes = get_checked_nodes()
-	
 	start_recording_with_nodes.emit(checked_nodes)
-	
-	print("Values are stored for")
-	for node in checked_nodes:
-		print("[%s] %s" % [node.get_class(), node.name])
-		
 	self.hide()
 	queue_free()
 	
@@ -120,8 +105,6 @@ func get_checked_nodes() -> Array:
 	var checked_items = get_checked_items(tree.get_root())
 	for item in checked_items:
 		checked_nodes.append(item.get_meta("node"))
-		
-	print(checked_nodes)
 	return checked_nodes
 	
 func get_checked_items(item: TreeItem, results:Array = []) -> Array:
