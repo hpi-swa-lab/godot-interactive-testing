@@ -1,175 +1,168 @@
 class_name Deserializer extends Node
 
-var loaded_data: Dictionary = {}
-var deserialized_objects: Dictionary = {}
+var _object_registry: Dictionary = {} 
+var _save_id_to_instance: Dictionary = {}
+var _instance_to_save_id: Dictionary = {}
+var _restored_objects: Array[Object] = []
 
+func restore(bytes: PackedByteArray, scene_tree: SceneTree) -> bool:
+	_reset_state()
+	
+	var save_state = bytes_to_var(bytes)
+	if not save_state: return false
+	
+	var root_id = save_state.get("root_id")
+	_object_registry = save_state.get("node_data", {})
 
-func restore(bytes: PackedByteArray) -> Node:
-	loaded_data.clear()
-	deserialized_objects.clear()
-	
-	loaded_data = bytes_to_var(bytes)
-	
-	if not loaded_data or typeof(loaded_data) != TYPE_DICTIONARY:
-		push_error("Restore failed: Save data is corrupt or not a Dictionary.")
-		return null
-		
-	var root_id = loaded_data.get("root_id")
-	var object_data = loaded_data.get("serializer_data")
-	
-	if not root_id or not object_data:
-		push_error("Restore failed: Save data is missing root_id or serializer_data.")
-		return null
+	var current_scene = scene_tree.get_current_scene()
+	var parent = current_scene.get_parent()
+	parent.remove_child(current_scene)
+	current_scene.queue_free()
 
-	var root_node = _deserialize_object(root_id, object_data)
+	var root_node = _reconstruct_object(root_id)
 	
-	if root_node:
-		_recursive_set_process_mode(root_node, Node.PROCESS_MODE_INHERIT)
-		
-	loaded_data.clear()
-	deserialized_objects.clear()
-	
-	return root_node
+	for id in _object_registry:
+		if not id in _save_id_to_instance:
+			_reconstruct_object(id)
 
+	parent.add_child(root_node)
+	scene_tree.current_scene = root_node
 
-func _recursive_set_process_mode(node: Node, mode: int):
-	node.process_mode = mode
-	
-	for child in node.get_children():
-		_recursive_set_process_mode(child, mode)
-
-
-func _deserialize_object(id: int, object_data: Dictionary) -> Object:
-	if id == 0:
-		return null
-		
-	if id in deserialized_objects:
-		return deserialized_objects[id]
-		
-	if not id in object_data:
-		push_error("Restore failed: Missing object ID " + str(id))
-		return null
-		
-	var payload: Dictionary = object_data[id]
-	
-	var new_obj: Object
-	
-	if payload.has("@resource_path"):
-		new_obj = load(payload["@resource_path"])
-		if new_obj == null:
-			push_error("Failed to load resource: " + payload["@resource_path"])
-			return null
+	for obj in _restored_objects:
+		if obj is Node:
+			_prune_ghost_nodes(obj)
 			
-		deserialized_objects[id] = new_obj
+		_apply_properties(obj)
+		_restore_signals(obj)
 		
-		if (new_obj is Resource) and payload.has("@name"):
-			new_obj.set_name(payload["@name"])
-		return new_obj
-		
-	elif payload.has("@scene_path"):
-		var scene = load(payload["@scene_path"])
-		if scene:
-			new_obj = scene.instantiate()
+		if obj is Node:
+			_restore_processing_state(obj)
 			
-			# If the node to be added is a scene, it probably comes with static nodes
-			# These static nodes are also backed up -> restore newly initiated ones, to prevent duplicates
-			for child in new_obj.get_children():
-				new_obj.remove_child(child)
-				child.free()
-		else:
-			push_error("Failed to load scene: " + payload["@scene_path"])
-			return null
+	return true
+
+func _reset_state():
+	_object_registry.clear()
+	_save_id_to_instance.clear()
+	_instance_to_save_id.clear()
+	_restored_objects.clear()
+
+
+func _reconstruct_object(id: int) -> Object:
+	if id in _save_id_to_instance:
+		return _save_id_to_instance[id]
+
+	var payload = _object_registry.get(id)
+	if not payload:
+		push_error("Missing data for ID: %s" % id)
+		return null
+
+	var instance = _factory_create(payload)
+	if not instance: return null
+
+	var instance_id = instance.get_instance_id()
+	_save_id_to_instance[id] = instance
+	_instance_to_save_id[instance_id] = id
+	_restored_objects.append(instance)
+
+	if instance is Node and payload.has("@children"):
+		for child_id in payload["@children"]:
+			var child = _reconstruct_object(child_id)
+			if child:
+				instance.add_child(child)
 	
+	return instance
+
+func _factory_create(payload: Dictionary) -> Object:
+	if payload.has("@scene_path"):
+		var scn = load(payload["@scene_path"])
+		return scn.instantiate() if scn else null
+		
+	elif payload.has("@resource_path"):
+		return load(payload["@resource_path"])
+		
 	elif payload.has("@class"):
-		var c_name = payload["@class"]
-		new_obj = ClassDB.instantiate(c_name)
+		return ClassDB.instantiate(payload["@class"])
 		
-		if new_obj is Node:
-			new_obj.process_mode = Node.PROCESS_MODE_DISABLED
-			
-		if new_obj == null:
-			push_error("Failed to instantiate class: " + c_name)
-			return null
-			
-	else:
-		push_error("Object payload has no @resource_path, @scene_path, or @class.")
-		return null
+	push_error("Unknown object type in save data.")
+	return null
 
-	deserialized_objects[id] = new_obj
+func _prune_ghost_nodes(node: Node):
+	# Remove nodes spawned by _ready() (particles, default items) 
+	# that do not exist in the save file.
+	for child in node.get_children().duplicate():
+		if not child.get_instance_id() in _instance_to_save_id:
+			node.remove_child(child)
+			child.queue_free()
 
-	if (new_obj is Node or new_obj is Resource) and payload.has("@name"):
-		new_obj.set_name(payload["@name"])
+func _apply_properties(obj: Object):
+	var payload = _get_payload(obj)
+	if not payload: return
 
-	var properties: Dictionary = payload.get("@properties", {})
-	for key in properties:
-		var value_payload = properties[key]
-		var deserialized_value = _deserialize_variant(value_payload, object_data)
-		new_obj.set(key, deserialized_value)
-	
-	if (new_obj is AnimatedSprite2D or new_obj is AnimationPlayer) and payload.has("@is_playing"):
-		new_obj.set("is_playing", payload.get("@is_playinger"))
-	
-	if payload.has("@signals"):
-		_deserialize_signals(new_obj, payload["@signals"], object_data)	
+	if payload.has("@name"):
+		obj.name = payload["@name"]
 
-	if new_obj is Node and payload.has("@children"):
-		var child_ids: Array = payload["@children"]
-		for child_id in child_ids:
-			var child_obj = _deserialize_object(child_id, object_data)
-			if child_obj:
-				new_obj.add_child(child_obj)
+	var props = payload.get("@properties", {})
+	for prop_name in props:
+		var val = _deserialize_variant(props[prop_name])
+		obj.set(prop_name, val)
 
-	return new_obj
+func _restore_processing_state(node: Node):
+	var payload = _get_payload(node)
+	if not payload: return
 
-func _deserialize_signals(obj: Object, signals_data: Dictionary, object_data: Dictionary):
-	for signal_name: String in signals_data:
-		# Ensure the object actually still has this signal (code might have changed)
-		if not obj.has_signal(signal_name):
-			continue
-			
-		var connections: Array = signals_data[signal_name]
+	if payload.has("@process_mode"):
+		node.process_mode = payload["@process_mode"] as int
 		
-		for conn_info: Dictionary in connections:
-			var target_id: int = conn_info.get("target_id")
-			var method_name: String = conn_info.get("method")
-			var flags: int = conn_info.get("flags", 0)
-			
-			# Recursively resolve the target object using your existing system
-			var target_obj = _deserialize_object(target_id, object_data)
-			
-			# Validity checks
-			if not is_instance_valid(target_obj):
-				push_warning("Signal restore failed: Target object missing for signal " + signal_name)
-				continue
-			
-			# Create the callable
-			var callable = Callable(target_obj, method_name)
-			
-			# Avoid duplicates:
-			# 1. If the connection persists (from scene), we shouldn't duplicate it.
-			# 2. If we already processed this logic.
-			if not obj.is_connected(signal_name, callable):
-				obj.connect(signal_name, callable, flags)
+	var flags = {
+		"@is_processing": "set_process",
+		"@is_physics_processing": "set_physics_process",
+		"@is_processing_input": "set_process_input",
+		"@is_processing_unhandled_input": "set_process_unhandled_input",
+		"@is_processing_unhandled_key_input": "set_process_unhandled_key_input"
+	}
+	
+	for key in flags:
+		if payload.get(key, false):
+			node.call(flags[key], true)
 
-func _deserialize_variant(payload: Variant, object_data: Dictionary) -> Variant:
-	match typeof(payload):
-		TYPE_INT:
-			if payload in object_data:
-				return _deserialize_object(payload, object_data)
-			else:
-				return payload
+func _get_payload(obj: Object) -> Dictionary:
+	var save_id = _instance_to_save_id.get(obj.get_instance_id())
+	return _object_registry.get(save_id, {}) if save_id else {}
 
+func _deserialize_variant(v: Variant) -> Variant:
+	match typeof(v):
 		TYPE_DICTIONARY:
+			if v.has("@obj_ref"):
+				var ref_id = v["@obj_ref"]
+				return _save_id_to_instance.get(ref_id)
+			
 			var d = {}
-			for key in payload:
-				d[key] = _deserialize_variant(payload[key], object_data)
+			for key in v: d[key] = _deserialize_variant(v[key])
 			return d
 			
 		TYPE_ARRAY:
-			var a = []
-			for item in payload:
-				a.append(_deserialize_variant(item, object_data))
-			return a
-
+			return v.map(_deserialize_variant) 
 		_:
-			return payload
+			return v
+
+func _restore_signals(obj: Object):
+	var payload = _get_payload(obj)
+	if not payload: return
+
+	var signals_data = payload.get("@signals", {})
+	
+	for signal_name in signals_data:
+		var connections_list = signals_data[signal_name]
+		
+		for conn_data in connections_list:
+			var target = _deserialize_variant(conn_data["target"])
+			
+			if not is_instance_valid(target):
+				continue
+			
+			var method_name = conn_data["method"]
+			var flags = conn_data["flags"]
+			var callable = Callable(target, method_name)
+
+			if not obj.is_connected(signal_name, callable):
+				obj.connect(signal_name, callable, flags)

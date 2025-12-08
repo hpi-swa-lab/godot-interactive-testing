@@ -1,6 +1,7 @@
 class_name Serializier extends Node
 
-var serializer_data: Dictionary = {}
+var serialized_data: Dictionary = {}
+var current_root: Node 
 
 const skipped_properties = [
 	"owner",
@@ -12,55 +13,56 @@ const skipped_properties = [
 	"global_skew",
 	"global_transform",
 	"resource_path",
-	# temp fix, to not serialize ourselfes...
-	"serializer_data",
-	"data"
-	
 ]
 
 const skipped_signals = []
 
 func serialize(root: Node):
-	serializer_data.clear()
+	serialized_data.clear()
+	current_root = root
 	var res = {}
 	var root_id: int = _serialize_object(root)
 	res = {
 		"root_id": root_id,
-		"serializer_data": serializer_data
+		"node_data": serialized_data
 	}
 	var bytes : PackedByteArray = var_to_bytes(res)	
 	return bytes
 
 func _serialize_signals(o: Object) -> Dictionary:
 	var signals_data = {}
-  # loop over all signals, emitted by o
 	for s: Dictionary in o.get_signal_list():
 		var signal_name = s.get("name")
 		if signal_name in skipped_signals:
 			continue
-		# get all connections from other objects to the signal s
+		
 		var connections: Array[Dictionary] = o.get_signal_connection_list(signal_name)
- 	   # no connection from other objects -> nothing to be saved!
 		if connections.is_empty():
 			continue
+			
 		var serialized_connections = []
 		for c in connections:
+			var flags = c.get("flags")
+			
+			# skip signals that are setup by the editor itself
+			#if flags & CONNECT_PERSIST:
+			#continue
+			
 			var callable: Callable = c["callable"]
 			var target = callable.get_object()
-			# target may be null, if it has been freed
+			
 			if not is_instance_valid(target):
 				continue
 			
+			var target_ref = _serialize_variant(target)
+			
+			if target_ref == null:
+				continue
+
 			var method_name = callable.get_method()
-			var flags = c.get("flags")
-			var target_id = _serialize_object(target)
-	  
-		  # skip flags that are defined in the editor
-			#if flags & CONNECT_PERSIST:
-				#continue
 	  
 			serialized_connections.append({
-				"target_id": target_id,
+				"target": target_ref,
 				"method": method_name,
 				"flags": flags
 			})
@@ -74,25 +76,47 @@ func _serialize_object(o: Object) -> int:
 	if o == null:
 		return 0
 	
+	var ignore = o.get_meta("testy_ignore", false)
+	if ignore == true:
+		return 0
+	
 	var id := o.get_instance_id()
-	if id in serializer_data:
+	if id in serialized_data:
 		return id
 		
-		
 	var payload = {}
-	serializer_data[id] = payload
+	serialized_data[id] = payload
 	
 	if "name" in o:
 		payload["@name"] = o.get("name")
 	 
 	if o is Resource and o.resource_path:
 		payload["@resource_path"] = o.resource_path
-		return id
-	
-	if o is Node and o.scene_file_path:
-		payload["@scene_path"] = o.scene_file_path
+	if o is Node: 
+		var n := o as Node
+		
+		if n != current_root and not current_root.is_ancestor_of(n):
+			return 0
+		
+		if n.scene_file_path:
+			# the node is a scene itself!
+			payload["@scene_path"] = o.scene_file_path
+		else:
+			payload["@class"] = o.get_class()
+		
+		payload["@process_mode"] = n.process_mode
+
+		if n.is_processing(): payload["@is_processing"] = true
+		if n.is_physics_processing(): payload["@is_physics_processing"] = true
+		if n.is_processing_input(): payload["@is_processing_input"] = true
+		if n.is_processing_unhandled_input(): payload["@is_processing_unhandled_input"] = true
+		if n.is_processing_unhandled_key_input(): payload["@is_processing_unhandled_key_input"] = true
 	else:
 		payload["@class"] = o.get_class()
+	
+	var signals = _serialize_signals(o)
+	if not signals.is_empty():
+		payload["@signals"] = signals
 	
 	var properties = {}
 	for p: Dictionary in o.get_property_list():
@@ -108,54 +132,53 @@ func _serialize_object(o: Object) -> int:
 		if name in skipped_properties:
 			continue
 		
-		if name == "is_card_in_slot":
-			print("Test")
-			
 		var type: int = p.get("type")
 		var val = o.get(name)
 		
 		properties[name] = _serialize_variant(val)
 	
-	payload["@properties"] = properties
+	if not properties.is_empty():
+		payload["@properties"] = properties
 	
-	if "is_card_in_slot" in properties:
-		print("Found is_card_in_slot")
-	 
 	if o is AnimatedSprite2D or o is AnimatedSprite3D or o is AnimationPlayer:
 		payload["@is_playing"] = true
 	if o is Timer:
 		properties["$is_stopped"] = _serialize_variant(o.is_stopped())
 	
 	if o is Node:
+		var node = o as Node
 		var child_ids: Array[int] = []
 		
-		for c: Node in o.get_children():
+		for c: Node in node.get_children():
 			child_ids.append(_serialize_object(c))
 		
-		payload["@children"] = child_ids
+		if not child_ids.is_empty():
+			payload["@children"] = child_ids
 	
 	return id
 
 func _serialize_variant(variant: Variant):
 	match typeof(variant):
 		TYPE_OBJECT:
-			return _serialize_object(variant as Object)
+			var o = variant as Object
+			var o_id = _serialize_object(o)
+			
+			return {
+				"@obj_ref": o_id
+			}
 		TYPE_NIL:
 			return null
 		TYPE_DICTIONARY:
-			# Must recursively serialize dictionaries in case
-			# they contain Object references
+			var dict = variant as Dictionary
 			var d = {}
-			for key in variant:
-				d[key] = _serialize_variant(variant[key])
+			for key in dict:
+				d[key] = _serialize_variant(dict[key])
+				
 			return d
 		TYPE_ARRAY:
-			# Must recursively serialize arrays in case
-			# they contain Object references
 			var a = []
 			for item in variant:
 				a.append(_serialize_variant(item))
 			return a
 		_:
-			# Default: serialize as is
 			return variant
