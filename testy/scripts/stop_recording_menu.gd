@@ -13,19 +13,16 @@ extends Window
 
 var diff_data: Dictionary = {}
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	item_list_changed.item_clicked.connect(_on_item_selected_changed)
 	
 func set_diff(diff: Dictionary) -> void:
 	diff_data = diff
-	print(diff_data)
 	_update_diff_ui()
 	
 func _update_diff_ui():
 	for node_name in diff_data.get("added_nodes", {}).keys():
 		item_list_added.add_item(node_name)
-		print(node_name)
 
 	for node_name in diff_data.get("removed_nodes", {}).keys():
 		item_list_removed.add_item(node_name)
@@ -45,12 +42,9 @@ func _update_diff_ui():
 			if new_val.length() > 30:
 				new_val = new_val.substr(0, 30) + "..."
 			changed_lines.append("    %s: %s -> %s" % [key, old_val, new_val])
-		# label_changed.text = "Changed Nodes:\n" + "\n".join(changed_lines)
-
 
 func _on_item_selected_changed(index: int, at_position: Vector2, mouse_button_index: int):
 	var node_name = item_list_changed.get_item_text(index)
-	print("Selected:", node_name)
 	
 	var props = diff_data["changed_nodes"][node_name]
 	var prop_lines: Array = []

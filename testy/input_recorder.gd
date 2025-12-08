@@ -18,7 +18,6 @@ var stop_recording_window: Window = null
 var tests_inspector_window: Window = null
 const TEST_DIR = "res://tests/" 
 
-# --- NEW: Save Game Constants ---
 const SAVE_DIR = "user://saves/"
 const SAVE_FILE_NAME = "savegame.bin"
 # ------------------------------
@@ -30,7 +29,6 @@ var compare_snapshots = load("res://addons/testy/snapshots/compare_snapshots.gd"
 var current_test_dir: String = ""
 var current_timestamp := ""
 
-# --- Core Game Loop Input Capture / Recording Logic (Unchanged) ---
 
 func _ready():
 	add_to_group("state_inspector")
@@ -38,37 +36,36 @@ func _ready():
 		set_process_input(true)
 		print("Input Recorder initialized. Ctrl+R toggles recording. Ctrl+S to save. Ctrl+O to load.")
 		
-		# Ensure the save directory exists
 		DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 
 func _input(event: InputEvent):
 	if not Engine.is_editor_hint():
 		if event is InputEventKey and event.is_pressed() and not event.is_echo():
+			# --- CTRL+R ---
 			if event.ctrl_pressed and event.keycode == KEY_R:
 				get_viewport().set_input_as_handled()
 				if is_recording:
 					stop_recording()
 				else:
-					# start_recording()
 					_create_state_inspector()
 				return
 				
-			# --- UPDATED: CTRL+S ---
+			# --- CTRL+S ---
 			if event.ctrl_pressed and event.keycode == KEY_S:
 				get_viewport().set_input_as_handled()
 				save_game_state()
 				return
 
-			# --- NEW: CTRL+O ---
+			# --- CTRL+O ---
 			if event.ctrl_pressed and event.keycode == KEY_O:
 				get_viewport().set_input_as_handled()
 				load_game_state("")
 				return
-				
+			
+			# --- CTRL+T ---
 			if event.ctrl_pressed and event.keycode == KEY_T:
 				get_viewport().set_input_as_handled()
 				_create_tests_inspector()
-				#_play_last_test_recording()
 				return
 
 	if is_recording:
@@ -78,7 +75,6 @@ func _input(event: InputEvent):
 		}
 		recorded_events.append(event_data)
 		
-# --- Save/Load Functions ---
 
 func save_game_state(name = "tmp"):
 	if is_restoring:
@@ -163,8 +159,6 @@ func _save_event_recording(events: Array):
 		return
 
 	var file_path = current_test_dir.path_join("recording.json")
-
-
 	var timestamp = Time.get_unix_time_from_system()
 	
 	var file = FileAccess.open(file_path, FileAccess.WRITE)
@@ -218,11 +212,11 @@ func _play_recording(dir_name: String):
 	if current_test_dir != "":
 		var start_path = current_test_dir.path_join("savegame-A.bin")
 		var end_path = current_test_dir.path_join("savegame-B.bin")
-		var savegame_result = compare_snapshots.show_diff(start_path, end_path)
+		var savegame_result = compare_snapshots.extract_diff_from_files(start_path, end_path)
 		
 		var test_A_path = current_test_dir.path_join("test-A.bin")
 		var test_B_path = current_test_dir.path_join("test-B.bin")
-		var test_result = compare_snapshots.show_diff(test_A_path, test_B_path)
+		var test_result = compare_snapshots.extract_diff_from_files(test_A_path, test_B_path)
 		save_diff(test_result, "test")
 		
 		var result = compare_snapshots.diff_diff(savegame_result, test_result)
@@ -255,7 +249,6 @@ func _create_state_inspector():
 	get_tree().set_pause(true)
 		
 	var scene := load("res://addons/testy/scenes/selection_menu.tscn")
-	
 	state_inspector_window = scene.instantiate()
 	state_inspector_window.add_to_group("state_inspector")
 	state_inspector_window.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -280,12 +273,10 @@ func _create_tests_inspector():
 	get_tree().set_pause(true)
 		
 	var scene := load("res://addons/testy/scenes/tests_menu.tscn")
-	
 	tests_inspector_window = scene.instantiate()
 	tests_inspector_window.add_to_group("state_inspector")
 	tests_inspector_window.process_mode = Node.PROCESS_MODE_ALWAYS
 	tests_inspector_window.close_requested.connect(_on_tests_inspector_closed)
-	
 	tests_inspector_window.test_selected.connect(_play_recording)
 
 	get_tree().root.add_child(tests_inspector_window)
@@ -304,7 +295,6 @@ func _show_stop_recording_menu(diff: Dictionary):
 	stop_recording_window.process_mode = Node.PROCESS_MODE_ALWAYS
 	
 	stop_recording_window.close_requested.connect(_close_stop_recording_menu)
-	
 	get_tree().root.add_child(stop_recording_window)
 	stop_recording_window.popup_centered()
 	stop_recording_window.call_deferred("set_diff", diff)
@@ -317,7 +307,6 @@ func _close_stop_recording_menu():
 func _save_recording_async():
 	await get_tree().create_timer(0.1).timeout
 	_save_event_recording(recorded_events)
-	
 	
 func _on_start_recording_from_window(nodes: Array):
 	current_timestamp = str(Time.get_datetime_string_from_system().replace(":", "").replace("T", "_"))
@@ -333,9 +322,7 @@ func start_recording():
 	is_recording = true
 	recorded_events.clear()
 	print("Recording started.")
-	
 	unpause_game()
-	
 	state_changed.emit(is_recording)
 
 func stop_recording():
@@ -347,7 +334,7 @@ func stop_recording():
 	if current_test_dir != "":
 		var start_path = current_test_dir.path_join("savegame-A.bin")
 		var end_path = current_test_dir.path_join("savegame-B.bin")
-		var result = compare_snapshots.show_diff(start_path, end_path)
+		var result = compare_snapshots.extract_diff_from_files(start_path, end_path)
 		save_diff(result)
 		_show_stop_recording_menu(result)
 	else:
@@ -355,11 +342,7 @@ func stop_recording():
 	
 	await get_tree().process_frame
 	await _save_recording_async()
-	
-	# _close_stop_recording_menu()
-	
-	# _save_event_recording(recorded_events)
-	
+
 	recording_finished.emit()
 	state_changed.emit(is_recording)
 	
