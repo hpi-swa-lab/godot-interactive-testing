@@ -1,0 +1,143 @@
+[gd_scene load_steps=2 format=3 uid="uid://bb85tfua2qjj3"]
+
+[ext_resource type="Script" uid="uid://bluc2m0rng0p8" path="res://addons/godot-sandbox/ui/scripts/finalize_test_window.gd" id="1_5fcik"]
+
+[node name="Window" type="Window"]
+oversampling_override = 1.0
+title = "Finalize Test"
+size = Vector2i(800, 600)
+transient = true
+script = ExtResource("1_5fcik")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"HeaderMedium"
+text = "Finalize Test"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Name:"
+
+[node name="TestName" type="LineEdit" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "test_name"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NodeOverview" type="PanelContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeOverview"]
+layout_mode = 2
+
+[node name="NodeSearchBar" type="LineEdit" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeOverview/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Filter Nodes..."
+clear_button_enabled = true
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeOverview/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NodeTree" type="Tree" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeOverview/VBoxContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+column_titles_visible = true
+
+[node name="NodeDetails" type="PanelContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer"]
+layout_mode = 2
+
+[node name="MetaLabel" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Node Metadata"
+
+[node name="MetaContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="PropertiesLabel" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Properties"
+
+[node name="NodeProperties" type="ScrollContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PropertiesContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer/NodeProperties"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PropertiesSearchBar" type="LineEdit" parent="MarginContainer/VBoxContainer/VBoxContainer2/HSplitContainer/NodeDetails/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Filter properties..."
+clear_button_enabled = true
+
+[node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"

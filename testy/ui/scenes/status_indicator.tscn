@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://noni74g8ie6"]
+
+[ext_resource type="Script" uid="uid://cj1muukhjjnqr" path="res://addons/godot-sandbox/ui/scripts/status_indicator.gd" id="1_crddy"]
+
+[node name="StatusIndicator" type="MarginContainer"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -93.0
+offset_bottom = 40.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+script = ExtResource("1_crddy")
+
+[node name="PlaybackIndicator" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "[⏵REPLAY]"
+horizontal_alignment = 2
+vertical_alignment = 1
+uppercase = true
+
+[node name="RecordingIndicator" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "[•REC]"
+horizontal_alignment = 2
+vertical_alignment = 1
