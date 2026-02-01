@@ -18,7 +18,8 @@ const skipped_properties = [
 	"matrix",
 	"process_priority",
 	"process_thread_group", 
-	"camera_attributes"
+	"camera_attributes",
+	"script"
 ]
 
 const skipped_signals = []
@@ -100,6 +101,10 @@ func _snapshot_object(o: Object) -> int:
 	serialized_data[id] = payload
 	
 	if "name" in o: payload["@name"] = o.get("name")
+	
+	var script = o.get_script()
+	if script and script is Script and script.resource_path:
+		payload["@script_path"] = script.resource_path
 	 
 	if o is Node: 
 		var n := o as Node

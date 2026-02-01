@@ -57,6 +57,14 @@ func _reconstruct_object(id: int) -> Object:
 
 	var instance = _factory_create(payload)
 	if not instance: return null
+	
+	if payload.has("@script_path"):
+		var current_script = instance.get_script()
+		var saved_script_path = payload["@script_path"]
+		if not current_script or current_script.resource_path != saved_script_path:
+			var script_res = load(saved_script_path)
+			if script_res:
+				instance.set_script(script_res)
 
 	var instance_id = instance.get_instance_id()
 	_save_id_to_instance[id] = instance
