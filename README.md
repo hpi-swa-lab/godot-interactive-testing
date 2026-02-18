@@ -3,18 +3,20 @@
 **Testy** is a Godot addon that allows developers to record game loops to create automated integration tests. Unlike standard unit testing tools, Testy focuses on the actual game loop, enabling recording, serialization of game states, playback and assertions.
 
 ## Quickstart
-1. Clone the repository into the `addons/` directory of your Godot project.
+1. Clone the repository into the `addons/` directory of your Godot project
 2. Enable the plugin in the Godot settings **Project > Project Settings > Plugins**
-3. To use it: Press **CTRL+R** while the game is running to start and stop a recording, or use the "Test Runner" panel in the editor at the bottom.
+3. To use it: Press **CTRL+R** while the game is running to start and stop a recording, or use the "Test Runner" panel in the editor at the bottom
 
----
 
 ## Abstract
-Testy is a Godot addon designed to enable gameloop testing. It allows developers to record user interactions within the game loop and replay them at any time. The tool provides multiple features, ranging from input recording and game state serialization to test playback and assertions.
+Testy is a Godot addon designed to enable gameloop testing. It allows developers to record user interactions within the game loop and replay them at any time. The tool combines input recording, game-state serialization, test playback, and assertions into a test workflow.
 
-Currently, automated testing in Godot is often complex and primarily focused on code-level unit tests. Testy fills this gap by enabling automated testing of the actual game loop—a task that is traditionally performed manually.
+Automated testing in GOdot is currently often complex and primarily focused on code-level unit tests. Testy addresses this gap by enabling automated testing of the game loop itself. This task is normally performed manually.
 
----
+With Testy, users can record a gameplay session as a test: all mouse and keyboard inputs are captured, and the game state is serialized. After the recording, Testy computes the differences between the recorded states. Then the users can select which parameters should be used as test criteria. The tests can then be executed inside the running game or from the Godot editor. The game is simulated, and the inputs are injected. After each execution, Testy verifies whether the defined criteria are fulfilled.
+
+The motivation for Testy is to enable interactive gameplay tests while keeping the plugin architecture decoupled from the game code. It is designed to be usable without prior programming experience.
+
 
 ## How to Use Testy
 
@@ -48,7 +50,7 @@ You can run existing tests directly from the Godot Editor
 
 
 ## Games
-This tool is currently used and tested in:
+This tool is currently used and tested with **Godot 4.5** in:
 - [Extreme Pro Gaming Fame](https://github.com/hpi-swa-lab/ExtremeProGaming-Godot)
 - [Babylonian Programming](https://github.com/hpi-swa-lab/babylonian-programming-godot/tree/eud25)
 
@@ -56,8 +58,15 @@ This tool is currently used and tested in:
 **Input Interference:**
 Currently, it is not possible to fully encapsulate keyboard input during test playback. If the test window is focused during playback, your manual keyboard interactions might interfere with the test. But normally you would not focus this window, so there should not be a problem.
 
+**Input Recording Limitation:**
+Testy records input by overriding `_input` and storing events together with the current tick. Limitation: If the game also overrides `_input` and consumes events (marks them as handled), there is no reliable way for the recorder to capture these events.
+
+**Snapshot Limitation:**
+Testy’s Snapshotter cannot reliably restore anonymous functions (lambdas) and async timers. It also cannot handle changes to the initial scene (added/removed nodes). Only changes in later scenes and code are supported.
+
+
 ## Architecture
-![Architecture from the gofot-interactive-testing addon](readme-assets\godot-architecture.png)
+![Architecture from the gofot-interactive-testing addon](readme-assets/godot-architecture.png)
 
 ## Game Architecture Overview
 
