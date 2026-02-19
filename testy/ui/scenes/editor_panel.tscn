@@ -1,0 +1,53 @@
+[gd_scene load_steps=3 format=3 uid="uid://trage80n575f"]
+
+[ext_resource type="Script" uid="uid://d2ce41jy3te0q" path="res://addons/testy/ui/scripts/editor_panel.gd" id="1_fqixv"]
+[ext_resource type="PackedScene" uid="uid://dc8irk6edn7xt" path="res://addons/testy/ui/scenes/test_selection_table.tscn" id="2_jnb3c"]
+
+[node name="EditorPanel" type="Control"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_fqixv")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LeftPanel" type="VBoxContainer" parent="HSplitContainer"]
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TestSelection" parent="HSplitContainer/LeftPanel" instance=ExtResource("2_jnb3c")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RightPanel" type="PanelContainer" parent="HSplitContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NoSelection" type="Label" parent="HSplitContainer/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select a test."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="HSplitContainer/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Details" type="VBoxContainer" parent="HSplitContainer/RightPanel/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2

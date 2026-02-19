@@ -1,0 +1,69 @@
+[gd_scene load_steps=3 format=3 uid="uid://b736y3igeimkq"]
+
+[ext_resource type="PackedScene" uid="uid://dc8irk6edn7xt" path="res://addons/godot-sandbox/ui/scenes/test_selection_table.tscn" id="1_dx0rt"]
+[ext_resource type="Script" uid="uid://baf2xlweefjic" path="res://addons/godot-sandbox/ui/scripts/overview_window.gd" id="1_ipj78"]
+
+[node name="OverviewWindow" type="Window"]
+process_mode = 3
+oversampling_override = 1.0
+title = "Testy Overview"
+size = Vector2i(800, 600)
+transient = true
+script = ExtResource("1_ipj78")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+theme_type_variation = &"HeaderMedium"
+text = "Create Test"
+
+[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+theme_type_variation = &"TooltipLabel"
+text = "Start a recording and  press CTRL + R to stop the recording at any time."
+
+[node name="StartRecording" type="Button" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start Recording"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer3" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer3"]
+layout_mode = 2
+theme_type_variation = &"HeaderMedium"
+text = "Test Overview"
+
+[node name="TestSelection" parent="MarginContainer/VBoxContainer/VBoxContainer3" instance=ExtResource("1_dx0rt")]
+unique_name_in_owner = true
+layout_mode = 2

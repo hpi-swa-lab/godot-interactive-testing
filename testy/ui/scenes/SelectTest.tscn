@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3 uid="uid://cr8qsm8if1etm"]
+
+[sub_resource type="GDScript" id="GDScript_2f2mf"]
+script/source = "class_name SelectTest
+extends Window
+
+signal selected_test(test: TestCase)
+
+@onready var test_cases: VBoxContainer = %TestCases
+var test_manager: TestManager
+
+func _ready():
+	test_manager = TestManager.new()
+	
+	
+	var tests = test_manager.list_test_cases()
+	
+	if tests.is_empty():
+		var label = Label.new()
+		label.text = \"No tests found.\"
+		test_cases.add_child(label)
+	else:
+		for test_case in tests:
+			var btn = Button.new()
+			btn.text = test_case.name if \"name\" in test_case and test_case.name else \"Unnamed Test\"
+			btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			
+			btn.pressed.connect(func(): selected_test.emit(test_case))
+			
+			test_cases.add_child(btn)
+"
+
+[node name="Window" type="Window"]
+oversampling_override = 1.0
+script = SubResource("GDScript_2f2mf")
+
+[node name="TestCases" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+offset_right = 40.0
+offset_bottom = 40.0
