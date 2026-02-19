@@ -8,8 +8,8 @@ var OVERVIEW_WINDOW: String = "uid://b736y3igeimkq"
 var sandbox: Sandbox
 var test_manager: TestManager
 
-var recorder: InputRecorder2
-var player: InputPlayer2
+var recorder: InputRecorder
+var player: InputPlayer
 
 var is_recording: bool = false
 var is_playing: bool = false
@@ -25,7 +25,7 @@ var seed: int
 var snapshot_a: Snapshot
 var snapshot_b: Snapshot
 
-var input_recording: InputRecording2
+var input_recording: InputRecording
 
 var status_indicator_layer: CanvasLayer
 var status_ui_instance: Control
@@ -39,8 +39,8 @@ func _ready() -> void:
 	
 	sandbox = Sandbox.new()
 	test_manager = TestManager.new()
-	recorder = InputRecorder2.new()
-	player = InputPlayer2.new()
+	recorder = InputRecorder.new()
+	player = InputPlayer.new()
 	snapshotter = Snapshotter.new()
 	snapshot_loader = SnapshotLoader.new()
 	
@@ -68,7 +68,6 @@ func _parse_cmd_args():
 		if args[i] == "--test-case" and i + 1 < args.size():
 			var folder_path = args[i + 1]
 			selected_test_case = test_manager.get_test_case(folder_path)
-			print("loaded test case " + selected_test_case.name)
 			_is_test_run = true
 			break
 
@@ -243,8 +242,7 @@ func _run_test(test_case: TestCase):
 	snapshot_loader.restore_properties()
 	
 	node_map = snapshot_loader.get_node_map()
-			
-			
+	
 	snapshot_a = snapshotter.snapshot(sandbox.current_scene)
 	
 	is_playing = true
@@ -252,7 +250,7 @@ func _run_test(test_case: TestCase):
 	if status_ui_instance:
 		status_ui_instance.show_playback()
 		
-	var recording: InputRecording2 = test_case.get_input_recording()
+	var recording: InputRecording = test_case.get_input_recording()
 	if not recording:
 		push_error("Input recording not found!")
 		unpause()
@@ -276,11 +274,9 @@ func _on_playback_finished():
 	print(">>> Playback finished")
 	pause()
 	
-	# 1. Capture & Compare
 	snapshot_b = snapshotter.snapshot(sandbox.current_scene)
 	var diff = SnapshotComparator.compare(snapshot_a, snapshot_b)
 	
-	# 2. Map IDs
 	var original_snapshot_b: Snapshot = selected_test_case.get_snapshot_b()
 	var assertions = selected_test_case.get_assertions()
 	

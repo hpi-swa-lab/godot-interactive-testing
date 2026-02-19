@@ -32,7 +32,7 @@ func _ready() -> void:
 		
 	if btn_all: 
 		btn_all.pressed.connect(func(): _set_filter_mode("all"))
-		btn_all.button_pressed = true # Default
+		btn_all.button_pressed = true
 		
 	if btn_pass: 
 		btn_pass.pressed.connect(func(): _set_filter_mode("passed"))
@@ -43,16 +43,13 @@ func _ready() -> void:
 func display_report(report: TestReport) -> void:
 	current_report = report
 	
-	# Update Stats
 	lbl_total.text = str(report.total_checks)
 	lbl_passed.text = str(report.passed_count)
 	lbl_failed.text = str(report.failed_count)
 	
-	# Styling Stats
 	lbl_passed.add_theme_color_override("font_color", COLOR_PASS)
 	lbl_failed.add_theme_color_override("font_color", COLOR_FAIL if report.failed_count > 0 else COLOR_MUTED)
 	
-	# Populate
 	_refresh_tree()
 	
 	popup_centered()
@@ -66,7 +63,6 @@ func _setup_tree_columns() -> void:
 	tree.set_column_title(1, "Status")
 	tree.set_column_title(2, "Details")
 	
-	# Sizing
 	tree.set_column_expand(0, true)
 	tree.set_column_custom_minimum_width(0, 250)
 	
@@ -78,8 +74,6 @@ func _setup_tree_columns() -> void:
 	
 	tree.hide_root = true
 	tree.select_mode = Tree.SELECT_ROW
-
-# --- Logic ---
 
 func _on_search_text_changed(new_text: String) -> void:
 	_filter_text = new_text.to_lower()
@@ -93,48 +87,36 @@ func _refresh_tree() -> void:
 	tree.clear()
 	if not current_report: return
 	
-	var root = tree.create_item() # Invisible Root
+	var root = tree.create_item() 
 	
 	for entry in current_report.results:
-		# --- 1. Global Status Filter (Buttons) ---
 		if _filter_mode == "passed" and not entry.is_passed: continue
 		if _filter_mode == "failed" and entry.is_passed: continue
 		
-		# --- 2. Text Search Logic ---
 		var show_entire_node = false
 		var visible_checks = []
 		
 		if _filter_text.is_empty():
-			# No filter? Show everything.
 			show_entire_node = true
 			visible_checks = entry.checks
 		else:
-			# A. Check Parent (Node Name / Type)
 			var parent_search_source = (entry.node_name + " " + entry.node_type).to_lower()
 			
 			if _filter_text in parent_search_source:
-				# Parent matches! Show it and ALL children for context.
 				show_entire_node = true
 				visible_checks = entry.checks
 			else:
-				# Parent didn't match. B. Check Children (Properties)
 				for check in entry.checks:
 					var c_name = check.get("name", "").to_lower()
-					# Optional: Search in expected/actual values too? 
-					# var c_val = str(check.get("actual", "")).to_lower()
 					
 					if _filter_text in c_name:
 						visible_checks.append(check)
 				
-				# If we found matching children, we must show the parent node
 				if not visible_checks.is_empty():
 					show_entire_node = true
 
-		# If neither parent nor children matched, skip this entry
 		if not show_entire_node:
 			continue
-		
-		# --- 3. Build Tree Items ---
 		
 		var node_item = tree.create_item(root)
 		
@@ -171,7 +153,6 @@ func _refresh_tree() -> void:
 			else:
 				check_item.set_text(0, "Property: " + c_name)
 			
-			# Status
 			if c_passed:
 				check_item.set_text(1, "OK")
 				check_item.set_custom_color(1, COLOR_PASS)

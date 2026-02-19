@@ -23,6 +23,9 @@ class NodeDelta extends RefCounted:
 class PropertyDelta extends RefCounted:
 	var old_value: Variant
 	var new_value: Variant
+	
+func _ready() -> void:
+	self.set_meta("testy_ignore", true)
 
 static func compare(snapshot_a: Snapshot, snapshot_b: Snapshot) -> SnapshotComparison:
 	var comparison = SnapshotComparison.new()

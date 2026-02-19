@@ -2,7 +2,7 @@
 extends EditorPlugin
 
 const AUTOLOAD_NAME = "testy"
-const AUTOLOAD_PATH = "autoload.gd"
+const AUTOLOAD_PATH = "res://addons/testy/autoload.gd"
 const EDITOR_PANEL_SCENE = preload("uid://trage80n575f")
 
 var editor_panel: EditorPanel

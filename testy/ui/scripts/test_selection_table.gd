@@ -66,7 +66,6 @@ func _on_search_text_changed(text: String) -> void:
 	_refresh_view()
 
 func _refresh_view() -> void:
-	# Preserve selection if possible
 	var selected_item = tree.get_selected()
 	if selected_item:
 		var meta = selected_item.get_metadata(0)
@@ -95,26 +94,21 @@ func _refresh_view() -> void:
 		if status_icon: item.set_icon(0, status_icon)
 		item.set_tooltip_text(0, tooltip)
 
-		# Name
 		item.set_text(1, test.name)
 		item.set_tooltip_text(1, test.path)
 
-		# Created
 		var created_at = _format_timestamp(test.created_at)
 		item.set_text(2, created_at)
 		
-		# Last Run
 		var last_run_at = "-"
 		if test.last_run_at > 0:
 			last_run_at = _format_timestamp(test.last_run_at)
 			
 		item.set_text(3, last_run_at)
 
-		# Actions
 		if icon_play: item.add_button(4, icon_play, 0, false, "Run")
 		if icon_delete: item.add_button(4, icon_delete, 1, false, "Delete")
 		
-		# Restore Selection
 		if _last_selected and test.path == _last_selected.path:
 			item.select(0)
 			_last_selected = test 

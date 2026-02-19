@@ -32,7 +32,6 @@ func _on_delete_requested(test: TestCase):
 func _spawn_confirm_delete():
 	if confirm_delete_popup: confirm_delete_popup.queue_free()
 
-	# Use ConfirmationDialog (standard for Yes/No)
 	confirm_delete_popup = ConfirmationDialog.new() 
 	confirm_delete_popup.title = "Delete Test Case?"
 	

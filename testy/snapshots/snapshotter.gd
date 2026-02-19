@@ -24,6 +24,9 @@ const skipped_properties = [
 
 const skipped_signals = []
 
+func _ready() -> void:
+	self.set_meta("testy_ignore", true)
+
 func snapshot(root: Node) -> Snapshot:
 	serialized_data = {}
 	current_root = root

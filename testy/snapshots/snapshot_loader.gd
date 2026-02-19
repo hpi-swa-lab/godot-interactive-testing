@@ -7,6 +7,9 @@ var _restored_objects: Array[Object] = []
 
 var node_map: Dictionary = {}
 
+func _ready() -> void:
+	self.set_meta("testy_ignore", true)
+
 func load_snapshot(s: Snapshot):
 	_reset_state()
 	

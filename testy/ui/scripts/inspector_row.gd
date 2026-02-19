@@ -23,11 +23,9 @@ func setup(key: String, val: Variant, is_checked: bool, on_toggled: Callable, is
 	_key_name = key
 	prop_name.text = key
 	
-	# 1. Checkbox Logic
 	checkbox.visible = true
 	checkbox.button_pressed = is_checked
 	
-	# Safety disconnect
 	if checkbox.toggled.is_connected(on_toggled):
 		checkbox.toggled.disconnect(on_toggled)
 		
@@ -80,7 +78,6 @@ func setup(key: String, val: Variant, is_checked: bool, on_toggled: Callable, is
 		old_value.modulate = Color.WHITE
 		new_value.modulate = Color.WHITE
 
-	# 3. Tooltips
 	_full_val_text = display_str
 	var tooltip_str = "%s: %s" % [key, display_str]
 	prop_name.tooltip_text = tooltip_str

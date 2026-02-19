@@ -62,8 +62,8 @@ func get_snapshot_a() -> Snapshot:
 func get_snapshot_b() -> Snapshot:
 	return _load_resource(FILE_SNAPSHOT_B) as Snapshot
 
-func get_input_recording() -> InputRecording2:
-	return _load_resource(FILE_INPUT) as InputRecording2
+func get_input_recording() -> InputRecording:
+	return _load_resource(FILE_INPUT) as InputRecording
 
 func get_assertions() -> Array:
 	var full_path = path.path_join(FILE_ASSERTIONS)

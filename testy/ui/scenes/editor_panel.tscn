@@ -1,9 +1,10 @@
 [gd_scene load_steps=3 format=3 uid="uid://trage80n575f"]
 
-[ext_resource type="Script" uid="uid://d2ce41jy3te0q" path="res://addons/godot-sandbox/ui/scripts/editor_panel.gd" id="1_fqixv"]
-[ext_resource type="PackedScene" uid="uid://dc8irk6edn7xt" path="res://addons/godot-sandbox/ui/scenes/test_selection_table.tscn" id="2_jnb3c"]
+[ext_resource type="Script" uid="uid://d2ce41jy3te0q" path="res://addons/testy/ui/scripts/editor_panel.gd" id="1_fqixv"]
+[ext_resource type="PackedScene" uid="uid://dc8irk6edn7xt" path="res://addons/testy/ui/scenes/test_selection_table.tscn" id="2_jnb3c"]
 
 [node name="EditorPanel" type="Control"]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
@@ -11,6 +12,7 @@ size_flags_vertical = 3
 script = ExtResource("1_fqixv")
 
 [node name="HSplitContainer" type="HSplitContainer" parent="."]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

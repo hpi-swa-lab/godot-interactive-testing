@@ -31,7 +31,7 @@ func setup():
 
 	sandbox_visualizer = TextureRect.new()
 	sandbox_visualizer.name = "SandboxVisualizer"
-	sandbox_visualizer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sandbox_visualizer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	sandbox_visualizer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sandbox_visualizer.stretch_mode = TextureRect.STRETCH_SCALE
 	sandbox_visualizer.texture = sandbox_viewport.get_texture()
@@ -42,7 +42,6 @@ func setup():
 	sandbox_visualizer.visible = true
 	root.add_child(sandbox_visualizer)
 	
-	root.size_changed.connect(_on_screen_resized)
 	tree.scene_changed.connect(_on_scene_changed)
 
 func sandbox(scene: Node):
@@ -100,7 +99,3 @@ func _on_scene_changed():
 		return
 
 	sandbox.call_deferred(scene)
-
-func _on_screen_resized():
-	if is_instance_valid(sandbox_viewport):
-		sandbox_viewport.size = get_window().size

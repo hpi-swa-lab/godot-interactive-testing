@@ -1,4 +1,4 @@
-class_name InputRecording2
+class_name InputRecording
 extends Resource
 
 @export var recorded_data: Dictionary = {}

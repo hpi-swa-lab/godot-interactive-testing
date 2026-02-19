@@ -1,16 +1,16 @@
-class_name InputRecorder2
+class_name InputRecorder
 extends Node
 
 var is_recording: bool = false
 var current_tick: int = 0
-var current_recording: InputRecording2
+var current_recording: InputRecording
 
 func _ready() -> void:
 	self.set_meta("testy_ignore", true)
 	set_physics_process(false)
 
 func start_recording() -> void:
-	current_recording = InputRecording2.new()
+	current_recording = InputRecording.new()
 	current_tick = 0
 	is_recording = true
 	set_physics_process(true)
@@ -28,5 +28,5 @@ func _input(event: InputEvent) -> void:
 	if is_recording:
 		current_recording.add_event(current_tick, event.duplicate())
 
-func get_recording() -> InputRecording2:
+func get_recording() -> InputRecording:
 	return current_recording

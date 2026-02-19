@@ -1,4 +1,4 @@
-class_name InputPlayer2
+class_name InputPlayer
 extends Node
 
 signal playback_started
@@ -6,14 +6,14 @@ signal playback_finished
 
 var is_playing: bool = false
 var current_tick: int = 0
-var active_recording: InputRecording2
+var active_recording: InputRecording
 var sandbox: Sandbox
 
 func _ready() -> void:
 	self.set_meta("testy_ignore", true)
 	set_physics_process(false)
 
-func play(recording: InputRecording2, active_sandbox: Sandbox) -> void:
+func play(recording: InputRecording, active_sandbox: Sandbox) -> void:
 	if not recording: return
 	active_recording = recording
 	sandbox = active_sandbox
@@ -21,7 +21,6 @@ func play(recording: InputRecording2, active_sandbox: Sandbox) -> void:
 	is_playing = true
 	set_physics_process(true)
 	playback_started.emit()
-	
 
 func _stop() -> void:
 	if not is_playing: return
