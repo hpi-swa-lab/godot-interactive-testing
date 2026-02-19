@@ -3,17 +3,17 @@
 **Testy** is a Godot addon that allows developers to record game loops to create automated integration tests. Unlike standard unit testing tools, Testy focuses on the actual game loop, enabling recording, serialization of game states, playback and assertions.
 
 ## Quickstart
-1. Clone the repository into the `addons/` directory of your Godot project
+1. Clone the repository and move the `testy` folder into the `addons/` directory of your Godot project
 2. Enable the plugin in the Godot settings **Project > Project Settings > Plugins**
 3. To use it: Press **CTRL+R** while the game is running to start and stop a recording, or use the "Test Runner" panel in the editor at the bottom
 
 
 ## Abstract
-Testy is a Godot addon designed to enable gameloop testing. It allows developers to record user interactions within the game loop and replay them at any time. The tool combines input recording, game-state serialization, test playback, and assertions into a test workflow.
+Testy is a Godot addon designed to enable gameloop testing. It allows developers to record user interactions and replay them at. The tool combines input recording, game-state serialization, test playback, and assertions into a test workflow.
 
-Automated testing in GOdot is currently often complex and primarily focused on code-level unit tests. Testy addresses this gap by enabling automated testing of the game loop itself. This task is normally performed manually.
+Automated testing in Godot is currently often complex and primarily focused on code-level unit tests. Testy addresses this gap by enabling automated testing of the game loop itself. This task is normally performed manually.
 
-With Testy, users can record a gameplay session as a test: all mouse and keyboard inputs are captured, and the game state is serialized. After the recording, Testy computes the differences between the recorded states. Then the users can select which parameters should be used as test criteria. The tests can then be executed inside the running game or from the Godot editor. The game is simulated, and the inputs are injected. After each execution, Testy verifies whether the defined criteria are fulfilled.
+With Testy, users can record a gameplay session as a test: all mouse and keyboard inputs are captured, and the game state is serialized. After the recording, Testy computes the differences between the recorded states. Then the users can select which parameters should be used as test criteria. The tests can then be executed inside the running game or from the Godot editor. The original gamestate is restored, and the pre-recorded inputs are injected. After each execution, Testy verifies whether the defined criteria are fulfilled.
 
 The motivation for Testy is to enable interactive gameplay tests while keeping the plugin architecture decoupled from the game code. It is designed to be usable without prior programming experience.
 
@@ -22,21 +22,19 @@ The motivation for Testy is to enable interactive gameplay tests while keeping t
 
 The tool offers two main interaction modes: **In-Game Recording and Playback** and **Editor Playback**.
 
-
-
-
-### 1. Recording a Test (In-Game)
+### 1. Recording/Running a Test (In-Game)
 
 ![Window for test criteria](readme-assets/window_test_criteria.png)
 
 1. Run your game instance
-2. Press **CTRL+R** to open the start recording window
-3. Perform the gameplay that you want to test
-4. Press **CTRL+R** again to stop the test recording
-5. The window at the top will open, showing the added, removed and changed objects between the gamestates
-6. Select the parameters you want to add to your **Test Criteria** (Assertions)
-7. Save the test with a test name
-8. You can verify the test immediately by pressing **CTRL+R** again and selecting the test
+2. Press **CTRL+R** to open the overview window
+3. Press Start Recording
+4. Perform the gameplay that you want to test
+5. Press **CTRL+R** again to stop the test recording
+6. The window at the top will open, showing the added, removed and changed objects during the recording
+7. Select the parameters you want to add to your **Test Criteria** (Assertions)
+8. Save the test with a test name
+9. You can run the test within the current game instance by pressing **CTRL+R** again and selecting the test
 
 ### 2. Running Tests (Editor)
 
@@ -50,13 +48,13 @@ You can run existing tests directly from the Godot Editor
 
 
 ## Games
-This tool is currently used and tested with **Godot 4.5** in:
-- [Extreme Pro Gaming Fame](https://github.com/hpi-swa-lab/ExtremeProGaming-Godot)
+This tool is currently used and tested with **Godot 4.5**, its functionality has been verified for:
+- [ExtremeProGaming](https://github.com/hpi-swa-lab/ExtremeProGaming-Godot)
 - [Babylonian Programming](https://github.com/hpi-swa-lab/babylonian-programming-godot/tree/eud25)
 
 ## Known Issues
 **Input Interference:**
-Currently, it is not possible to fully encapsulate keyboard input during test playback. If the test window is focused during playback, your manual keyboard interactions might interfere with the test. But normally you would not focus this window, so there should not be a problem.
+Currently, it is not possible to fully encapsulate keyboard input during test playback. If the test window is focused during playback, your manual keyboard interactions can interfere with the test (should not be a big problem, as this would be intentional interference).
 
 **Input Recording Limitation:**
 Testy records input by overriding `_input` and storing events together with the current tick. Limitation: If the game also overrides `_input` and consumes events (marks them as handled), there is no reliable way for the recorder to capture these events.
@@ -71,29 +69,29 @@ Testy’s Snapshotter cannot reliably restore anonymous functions (lambdas) and 
 ## Game Architecture Overview
 
 - **Game Instance:**
-This is the actual running game instance, it only interacts with the Testy Plugin.
+This is the actual running game instance, which does not need to follow specific conventions to be supported.
 - **TestyPlugin:**
-The entry point. Loads the Autoload and establishes the connection to the game.
+The entry point. Initializes the Autoload and the TestRunner.
 - **Autoload:**
-Manages all classes. Loaded by the plugin manager, it listens to global input and sends it to relevant classes.
+Manages and delegates functionality. Automatically added to the scene tree on game start.
 - **Sandbox:**
-Encapsulates the Scene and communicates with the Game Instance. For playback, it simulates an encapsulated scene.
+Encapsulates the currently running scene to support full mouse isolation during playback. 
 - **Snapshot:**
     - **Snapshotter:**
-    Serializes the current game state by traversing the root node and converting it into a storable format.
+    Snapshots the current game state by traversing the root node and converting it into a storable format.
     - **SnapshotLoader:**
-    Loads serialized game states for test playback, clearing currently available objects.
+    Loads snapshot for test playback, using two-phase approach (restore serialized scene, remove all nodes that may have been spawned during initialization).
     - **Snapshot Comparator:**
-    Compares two serialized game states to calculate the differnces (nodes added, removed, or parameters changed).
+    Compares two Snapshots to calculate the differnces (nodes added, removed, or parameters changed).
 - **Input:**
     - **InputRecorder:**
-    Listens to user input and saves it to a file along with the current game tick.
+    Listens to input events and saves it to a file along with the current game tick.
     - **InputPlayer:**
     Injects recorded inputs back into the Sandbox during playback.
 - **TestManager:**
 Manages test execution, file saving, and success status.
 - **TestRunner:**
-The interactive user interface within the Godot code editor for running multiple tests.
+The interactive user interface within the Godot Editor for running multiple tests.
 
 
 ## Data architecture
